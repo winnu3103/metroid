@@ -40,4 +40,3 @@ SELECT
 FROM yearly_mass current_year
 LEFT JOIN yearly_mass previous_year ON current_year.year - INTERVAL '1 YEAR' = previous_year.year
 ORDER BY current_year.year;
-
