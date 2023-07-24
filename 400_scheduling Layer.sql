@@ -12,7 +12,7 @@ CREATE OR REPLACE STREAM raw_staging_stream ON TABLE raw_staging;
 
 CREATE OR REPLACE TASK task_load_raw_tbl
 WAREHOUSE = METROIDS
-SCHEDULE = 'USING CRON 0 9-17 * * 1-5 UTC'
+SCHEDULE = '1 MINUTE'
 WHEN SYSTEM$STREAM_HAS_DATA('raw_staging_stream')
 AS
 INSERT INTO raw_tbl (metroid)
@@ -23,7 +23,8 @@ LATERAL FLATTEN(input => parse_json(raw_staging_stream.metroid));
 CREATE OR REPLACE STREAM raw_tbl_stream ON TABLE raw_tbl;
 
 CREATE OR REPLACE TASK task_load_other_tbl
-AFTER task_load_raw_tbl
+WAREHOUSE = METROIDS
+SCHEDULE = '1 MINUTE'
 WHEN (SYSTEM$STREAM_HAS_DATA('raw_tbl_stream'))
 AS
 INSERT INTO other_tbl (id, name, nametype, recclass, mass, fall, year, reclat, reclong)
@@ -31,7 +32,8 @@ SELECT metroid:id::INT, metroid:name, metroid:nametype, metroid:recclass, metroi
 FROM (SELECT metroid FROM raw_tbl_stream);
 
 CREATE OR REPLACE TASK task_load_geolocation_tbl
-AFTER task_load_raw_tbl
+WAREHOUSE = METROIDS
+SCHEDULE = '1 MINUTE'
 WHEN SYSTEM$STREAM_HAS_DATA('raw_tbl_stream')
 AS
 INSERT INTO geolocation_tbl (id, type, latitude, longitude)
@@ -41,7 +43,8 @@ FROM (SELECT metroid FROM raw_tbl_stream);
 CREATE OR REPLACE STREAM other_tbl_stream ON TABLE other_tbl;
 
 CREATE OR REPLACE TASK task_update_publish_tbl
-AFTER task_load_other_tbl
+WAREHOUSE = METROIDS
+SCHEDULE = '1 MINUTE'
 WHEN SYSTEM$STREAM_HAS_DATA('other_tbl_stream')
 AS
 INSERT INTO publish_tbl (id, name, nametype, recclass, mass, fall, year, reclat, reclong, previous_mass, mass_growth_percentage)
@@ -66,3 +69,8 @@ WHERE t1.year IN (
   SELECT metroid:year::TIMESTAMP_NTZ
   FROM (SELECT metroid FROM raw_tbl_stream)
 );
+
+ALTER TASK task_load_raw_tbl RESUME;
+ALTER TASK task_load_other_tbl RESUME;
+ALTER TASK task_load_geolocation_tbl RESUME;
+ALTER TASK task_update_publish_tbl RESUME;
