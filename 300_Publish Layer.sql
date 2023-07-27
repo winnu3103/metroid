@@ -1,3 +1,4 @@
+--Publish layer
 CREATE OR REPLACE TABLE publish_tbl AS
 SELECT 
   t1.id,

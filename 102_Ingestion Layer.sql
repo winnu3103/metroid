@@ -1,7 +1,9 @@
+--creating raw table
 CREATE OR REPLACE TABLE raw_tbl (
   metroid VARIANT
 );
---Inserting into table
+
+-- inserting into table1
 INSERT INTO raw_tbl (metroid)
 SELECT VALUE metroid
 FROM raw_staging,
