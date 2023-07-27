@@ -1,3 +1,4 @@
+--creating raw table
 CREATE OR REPLACE TABLE raw_tbl (
   metroid VARIANT
 );
